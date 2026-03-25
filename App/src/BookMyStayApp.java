@@ -26,6 +26,7 @@ public class BookMyStayApp {
     }
 }
 
+
 class Room {
     private String type;
     private int beds;
