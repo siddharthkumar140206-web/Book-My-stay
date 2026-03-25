@@ -24,6 +24,7 @@ public class BookMyStayApp {
 
             System.out.println("Processing booking for Guest: "+ current.getGuestName()+", Room Type: "+ current.getRoomType());
         }
+
     }
 }
 
