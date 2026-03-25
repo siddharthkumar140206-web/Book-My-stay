@@ -60,6 +60,7 @@ class Room {
     }
 }
 
+
 class RoomInventory {
 
     private Map<String, Integer> roomAvailability;
