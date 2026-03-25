@@ -84,11 +84,11 @@ class RoomSearchService{
     public void searchAvailableRooms(RoomInventory inventory,Room singleRoom, Room doubleRoom, Room suiteRoom){
         Map<String,Integer> availability = inventory.getRoomAvailability();
 
-        if(availability.get("Single")>0){
+        if(availability.get("Single\t")>0){
             BookMyStayApp.printRoomDetails(singleRoom, inventory);
         }
 
-        if(availability.get("Double")>0){
+        if(availability.get("Double\t")>0){
             BookMyStayApp.printRoomDetails(doubleRoom, inventory);
         }
 
