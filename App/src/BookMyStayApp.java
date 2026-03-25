@@ -92,7 +92,7 @@ class RoomSearchService{
             BookMyStayApp.printRoomDetails(doubleRoom, inventory);
         }
 
-        if(availability.get("Suite")>0){
+        if(availability.get("Suite\t")>0){
             BookMyStayApp.printRoomDetails(suiteRoom, inventory);
         }
     }
