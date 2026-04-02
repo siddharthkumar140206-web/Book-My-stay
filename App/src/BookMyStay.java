@@ -1,205 +1,93 @@
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Queue;
+import java.io.*;
 import java.util.*;
+
+class RoomInventory {
+    private Map<String, Integer> rooms;
+
+    public RoomInventory() {
+        rooms = new HashMap<>();
+        rooms.put("Single", 5);
+        rooms.put("Double", 3);
+        rooms.put("Suite", 2);
+    }
+
+    public Map<String, Integer> getRooms() {
+        return rooms;
+    }
+
+    public void setRoom(String type, int count) {
+        rooms.put(type, count);
+    }
+
+    public void display() {
+        System.out.println("\nCurrent Inventory:");
+        for (String key : rooms.keySet()) {
+            System.out.println(key + ": " + rooms.get(key));
+        }
+    }
+}
+
+class FilePersistenceService {
+
+    // Save inventory to file
+    public void saveInventory(RoomInventory inventory, String filePath) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+
+            for (Map.Entry<String, Integer> entry : inventory.getRooms().entrySet()) {
+                writer.write(entry.getKey() + "=" + entry.getValue());
+                writer.newLine();
+            }
+
+            System.out.println("\nInventory saved successfully.");
+
+        } catch (IOException e) {
+            System.out.println("Error saving inventory: " + e.getMessage());
+        }
+    }
+
+    // Load inventory from file
+    public void loadInventory(RoomInventory inventory, String filePath) {
+        File file = new File(filePath);
+
+        if (!file.exists()) {
+            System.out.println("No valid inventory data found. Starting fresh.");
+            return;
+        }
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split("=");
+                if (parts.length == 2) {
+                    String type = parts[0];
+                    int count = Integer.parseInt(parts[1]);
+                    inventory.setRoom(type, count);
+                }
+            }
+
+            System.out.println("Inventory loaded successfully.");
+
+        } catch (Exception e) {
+            System.out.println("Error loading inventory. Starting fresh.");
+        }
+    }
+}
+
 
 public class BookMyStay {
 
     public static void main(String[] args) {
 
-        System.out.println("Room Allocation Process");
+        System.out.println("System Recovery");
 
-        BookingRequestQueue bookingQueue = new BookingRequestQueue();
+        String filePath = "inventory.txt";
+
         RoomInventory inventory = new RoomInventory();
-        RoomAllocationService allocateService=new RoomAllocationService();
-        AddOnServiceManager serviceManager=new AddOnServiceManager();
+        FilePersistenceService service = new FilePersistenceService();
 
-        Reservation r1=new Reservation("Abhi", "Single");
-
-        bookingQueue.addRequest(r1);
-
-        String reservationId =null;
-
-        while(bookingQueue.hasPendingRequests()){
-            Reservation current=bookingQueue.getNextRequest();
-            reservationId=allocateService.allocateRoom(current, inventory);
-        }
-
-        serviceManager.addService(reservationId, new AddOnService("Breakfast",500));
-        serviceManager.addService(reservationId,new AddOnService("Spa",1000));
-
-        double total= serviceManager.calculateTotalServiceCost(reservationId);
-
-        System.out.println("\nAdd-On Service Selection");
-        System.out.println("Reservation ID: "+reservationId);
-        System.out.println("Total Add-On Cost: "+total);
-    }
-}
-
-class Room {
-    private String type;
-    private int beds;
-    private int size;
-    private double price;
-
-    public Room(String type, int beds, int size, double price) {
-        this.type = type;
-        this.beds = beds;
-        this.size = size;
-        this.price = price;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public int getBeds() {
-        return beds;
-    }
-
-    public int getSize() {
-        return size;
-    }
-
-    public double getPrice() {
-        return price;
-    }
-}
-
-class RoomInventory {
-
-    private Map<String, Integer> roomAvailability;
-
-    public RoomInventory() {
-        roomAvailability = new HashMap<>();
-        initializeInventory();
-    }
-
-    private void initializeInventory() {
-        roomAvailability.put("Single", 5);
-        roomAvailability.put("Double", 3);
-        roomAvailability.put("Suite", 2);
-    }
-
-    public Map<String, Integer> getRoomAvailability() {
-        return roomAvailability;
-    }
-
-    public void updateAvailability(String roomType, int count) {
-        roomAvailability.put(roomType, count);
-    }
-}
-
-class Reservation{
-    private String guestName;
-    private String roomType;
-
-    public Reservation(String guestName, String roomType){
-        this.guestName=guestName;
-        this.roomType=roomType;
-    }
-
-    public String getGuestName(){
-        return guestName;
-    }
-
-    public String getRoomType(){
-        return roomType;
-    }
-}
-
-class BookingRequestQueue{
-    private Queue<Reservation> requestQueue;
-    public BookingRequestQueue(){
-        requestQueue=new LinkedList<>();
-    }
-
-    public void addRequest(Reservation reservation){
-        requestQueue.offer(reservation);
-    }
-
-    public Reservation getNextRequest(){
-        return requestQueue.poll();
-    }
-
-    public boolean hasPendingRequests(){
-        return !requestQueue.isEmpty();
-    }
-}
-
-class RoomAllocationService{
-    private Set<String> allocatedRoomIds;
-    private Map<String, Set<String>> assignedRoomsByType;
-
-    public RoomAllocationService() {
-        allocatedRoomIds=new HashSet<>();
-        assignedRoomsByType=new HashMap<>();
-    }
-
-    public String allocateRoom(Reservation reservation, RoomInventory inventory){
-        String roomType=reservation.getRoomType();
-        Map<String, Integer> availability = inventory.getRoomAvailability();
-
-        if(availability.getOrDefault(roomType,0)>0){
-            String roomId=generateRoomId(roomType);
-
-            allocatedRoomIds.add(roomId);
-            assignedRoomsByType.computeIfAbsent(roomType, k->new HashSet<>()).add(roomId);
-
-            inventory.updateAvailability(roomType, availability.get(roomType)-1);
-
-            System.out.println("Booking Confirmed for Guest: "+reservation.getGuestName()+", Room Type: "+roomType);
-            return roomId;
-        }
-        return null;
-    }
-
-    private String generateRoomId(String roomType){
-        int count =assignedRoomsByType.getOrDefault(roomType, new HashSet<>()).size()+1;
-
-        return roomType+"-"+count;
-    }
-}
-
-class AddOnService{
-    private String serviceName;
-    private double cost;
-
-    public AddOnService(String serviceName, double cost){
-        this.serviceName=serviceName;
-        this.cost=cost;
-    }
-
-    public String getServiceName(){
-        return serviceName;
-    }
-
-    public double getCost(){
-        return cost;
-    }
-}
-
-class AddOnServiceManager{
-    private Map<String, List<AddOnService>> servicesByReservation;
-
-    public AddOnServiceManager(){
-        servicesByReservation=new HashMap<>();
-    }
-
-    public void addService(String reservationId, AddOnService service){
-        servicesByReservation.computeIfAbsent(reservationId, k->new ArrayList<>()).add(service);
-    }
-
-    public double calculateTotalServiceCost(String reservationId){
-        List<AddOnService> services = servicesByReservation.get(reservationId);
-
-        if(services==null) return 0;
-
-        double total=0;
-        for(AddOnService s : services){
-            total+=s.getCost();
-        }
-        return total;
+        service.loadInventory(inventory, filePath);
+        inventory.display();
+        service.saveInventory(inventory, filePath);
     }
 }
