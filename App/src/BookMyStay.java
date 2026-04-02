@@ -1,96 +1,124 @@
 
 
 
-import java.io.*;
-        import java.util.*;
-
-class RoomInventory {
-    private Map<String, Integer> rooms;
-
-    public RoomInventory() {
-        rooms = new HashMap<>();
-        rooms.put("Single", 5);
-        rooms.put("Double", 3);
-        rooms.put("Suite", 2);
-    }
-
-    public Map<String, Integer> getRooms() {
-        return rooms;
-    }
-
-    public void setRoom(String type, int count) {
-        rooms.put(type, count);
-    }
-
-    public void display() {
-        System.out.println("\nCurrent Inventory:");
-        for (String key : rooms.keySet()) {
-            System.out.println(key + ": " + rooms.get(key));
-        }
-    }
-}
-
-class FilePersistenceService {
-
-    // Save inventory to file
-    public void saveInventory(RoomInventory inventory, String filePath) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
-
-            for (Map.Entry<String, Integer> entry : inventory.getRooms().entrySet()) {
-                writer.write(entry.getKey() + "=" + entry.getValue());
-                writer.newLine();
-            }
-
-            System.out.println("\nInventory saved successfully.");
-
-        } catch (IOException e) {
-            System.out.println("Error saving inventory: " + e.getMessage());
-        }
-    }
-
-    // Load inventory from file
-    public void loadInventory(RoomInventory inventory, String filePath) {
-        File file = new File(filePath);
-
-        if (!file.exists()) {
-            System.out.println("No valid inventory data found. Starting fresh.");
-            return;
-        }
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
-
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split("=");
-                if (parts.length == 2) {
-                    String type = parts[0];
-                    int count = Integer.parseInt(parts[1]);
-                    inventory.setRoom(type, count);
-                }
-            }
-
-            System.out.println("Inventory loaded successfully.");
-
-        } catch (Exception e) {
-            System.out.println("Error loading inventory. Starting fresh.");
-        }
-    }
-}
-
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Queue;
 
 public class BookMyStay {
 
     public static void main(String[] args) {
 
-        System.out.println("System Recovery");
+        System.out.println("Booking Request Queue");
 
-        String filePath = "inventory.txt";
+        BookingRequestQueue bookingQueue = new BookingRequestQueue();
 
-        RoomInventory inventory = new RoomInventory();
-        FilePersistenceService service = new FilePersistenceService();
+        Reservation r1=new Reservation("Abhi", "Single");
+        Reservation r2=new Reservation("Subha", "Double");
+        Reservation r3=new Reservation("Vanmathi", "Suite");
 
-        service.loadInventory(inventory, filePath);
-        inventory.display();
-        service.saveInventory(inventory, filePath);
+        bookingQueue.addRequest(r1);
+        bookingQueue.addRequest(r2);
+        bookingQueue.addRequest(r3);
+
+        while(bookingQueue.hasPendingRequests()){
+            Reservation current=bookingQueue.getNextRequest();
+
+            System.out.println("Processing booking for Guest: "+ current.getGuestName()+", Room Type: "+ current.getRoomType());
+        }
+
+    }
+}
+
+
+class Room {
+    private String type;
+    private int beds;
+    private int size;
+    private double price;
+
+    public Room(String type, int beds, int size, double price) {
+        this.type = type;
+        this.beds = beds;
+        this.size = size;
+        this.price = price;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public int getBeds() {
+        return beds;
+    }
+
+    public int getSize() {
+        return size;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+}
+
+class RoomInventory {
+
+    private Map<String, Integer> roomAvailability;
+
+    public RoomInventory() {
+        roomAvailability = new HashMap<>();
+        initializeInventory();
+    }
+
+    private void initializeInventory() {
+        roomAvailability.put("Single", 5);
+        roomAvailability.put("Double", 3);
+        roomAvailability.put("Suite", 2);
+    }
+
+    public Map<String, Integer> getRoomAvailability() {
+        return roomAvailability;
+    }
+
+    public void updateAvailability(String roomType, int count) {
+        roomAvailability.put(roomType, count);
+    }
+}
+
+class Reservation{
+    private String guestName;
+    private String roomType;
+
+    public Reservation(String guestName, String roomType){
+        this.guestName=guestName;
+        this.roomType=roomType;
+    }
+
+    public String getGuestName(){
+        return guestName;
+    }
+
+    public String getRoomType(){
+        return roomType;
+    }
+}
+
+class BookingRequestQueue{
+    private Queue<Reservation> requestQueue;
+    public BookingRequestQueue(){
+        requestQueue=new LinkedList<>();
+    }
+
+    public void addRequest(Reservation reservation){
+        requestQueue.offer(reservation);
+    }
+
+    public Reservation getNextRequest(){
+        return requestQueue.poll();
+    }
+
+    public boolean hasPendingRequests(){
+        return !requestQueue.isEmpty();
     }
 }
